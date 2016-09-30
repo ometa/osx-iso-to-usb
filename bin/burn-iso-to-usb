@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# sanity checking
+# basic sanity checking
 
 if [ $# -ne 2 ]; then
     echo ""
@@ -15,7 +15,7 @@ for i in diskutil hdiutil dd; do
     [[ $? -eq 1 ]] && echo "$i not found" && exit 1
 done
 
-# END sanity checking
+# define variables
 
 iso=$1
 img=$(basename $iso).img
@@ -23,7 +23,8 @@ usb=$2
 tmp=/tmp
 
 # ---------------------------------------
-# sanity checks
+# input checks
+
 if [ ! -f $iso ]; then
     echo "${iso} not found."
     exit
@@ -42,8 +43,8 @@ if [ $isUSB != "USB" ]; then
     exit
 fi
 
-# end sanity checks
 # ---------------------------------------
+# do the needful
 
 # convert the iso to an img
 hdiutil convert -format UDRW -o $tmp/$img $iso
