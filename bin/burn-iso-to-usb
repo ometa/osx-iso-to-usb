@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# sanity checking
+
+if [ $# -ne 2 ]; then
+    echo ""
+    echo "Usage:  $(basename $0) <path-to-iso> <usb-device>"
+    echo "Example: $(basename $0) /path/to/file.iso /dev/disk3"
+    echo ""
+    exit
+fi
+
+for i in diskutil hdiutil dd; do
+    which $i 2>&1 > /dev/null
+    [[ $? -eq 1 ]] && echo "$i not found" && exit 1
+done
+
+# END sanity checking
+
+iso=$1
+img=$(basename $iso).img
+usb=$2
+tmp=/tmp
+
+# ---------------------------------------
+# sanity checks
+if [ ! -f $iso ]; then
+    echo "${iso} not found."
+    exit
+fi
+
+diskutil info $usb > /dev/null
+if [ $? -ne 0 ]; then
+    echo "${usb} not found."
+    exit
+fi
+
+# ensure the destination is truly a usb drive
+isUSB=$(diskutil info $usb |grep Protocol | awk '{print $2}')
+if [ $isUSB != "USB" ]; then
+    echo "$usb is not a USB drive."
+    exit
+fi
+
+# end sanity checks
+# ---------------------------------------
+
+# convert the iso to an img
+hdiutil convert -format UDRW -o $tmp/$img $iso
+mv $tmp/$img.dmg $tmp/$img
+
+diskutil unmountDisk $usb
+
+echo "'burning' ${img} to ${usb}..."
+sudo dd if=$tmp/$img of=$usb bs=1m
+
+# eject the usb drive completely
+diskutil eject $usb
+
+# cleanup
+rm $tmp/$img
